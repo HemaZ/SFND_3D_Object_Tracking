@@ -148,11 +148,74 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+     // auxiliary variables
+    double dT = 1/frameRate;        // time between two measurements in seconds
+    // double laneWidth = 4.0; // assumed width of the ego lane
+
+    // find closest distance to Lidar points within ego lane
+    double minXPrev = 1e9, minXCurr = 1e9;
+    for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
+    {
+        minXPrev = minXPrev > it->x ? it->x : minXPrev;
+    }
+
+    for (auto it = lidarPointsCurr.begin(); it != lidarPointsCurr.end(); ++it)
+    {
+        minXCurr = minXCurr > it->x ? it->x : minXCurr;
+    }
+
+    // compute TTC from both measurements
+    TTC = minXCurr * dT / (minXPrev - minXCurr);
 }
 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    vector < vector <int> > boxesTable (currFrame.boundingBoxes.size(), vector <int> (prevFrame.boundingBoxes.size(), 0)); // table shape is (curframeBoxes, PrevframeBoxes)
+    // Lets first give unique ids for each bounding box
+    int boxId = 0;
+    for (auto it1 = prevFrame.boundingBoxes.begin(); it1 !=prevFrame.boundingBoxes.end(); ++it1)
+        {
+            it1->boxID = boxId++;
+        }
+    boxId = 0;
+    for (auto it2 = currFrame.boundingBoxes.begin(); it2 !=currFrame.boundingBoxes.end(); ++it2)
+        {
+            it2->boxID = boxId++;
+        }
+    
+    cv::Point2f prevP, curP;   
+    for(auto it=matches.begin(); it!=matches.end(); ++it){
+        prevP = prevFrame.keypoints[it->queryIdx].pt;
+        curP = currFrame.keypoints[it->trainIdx].pt;
+        std::vector<int> prevBBoxes;
+        for (auto it2 = prevFrame.boundingBoxes.begin(); it2 !=prevFrame.boundingBoxes.end(); ++it2)
+        {
+            if(it2->roi.contains(prevP)){
+                it2->kptMatches.push_back(*it);
+                it2->keypoints.push_back(prevFrame.keypoints[it->queryIdx]);
+                prevBBoxes.push_back(it2->boxID);
+            }
+        }
+        for (auto it2 = currFrame.boundingBoxes.begin(); it2 !=currFrame.boundingBoxes.end(); ++it2)
+        {
+            if(it2->roi.contains(curP)){
+                it2->kptMatches.push_back(*it);
+                it2->keypoints.push_back(currFrame.keypoints[it->trainIdx]);
+                for (auto previt = prevBBoxes.begin(); previt != prevBBoxes.end(); ++previt)
+                {
+                    boxesTable[it2->boxID][*previt] +=1;
+                }
+                
+                
+            }
+        }
+        
+        
+    }
+    for (int row = 0; row < boxesTable.size(); row++) {
+        int maxElIdx = max_element(boxesTable[row].begin(), boxesTable[row].end()) - boxesTable[row].begin();
+        bbBestMatches.insert(pair<int, int>(row, maxElIdx));
+    }
+
 }

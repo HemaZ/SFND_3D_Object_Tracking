@@ -36,5 +36,44 @@ struct DataFrame { // represents the available sensor information at the same ti
     std::vector<BoundingBox> boundingBoxes; // ROI around detected objects in 2D image coordinates
     std::map<int,int> bbMatches; // bounding box matches between previous and current frame
 };
+template<typename T>
+class RingBuffer{
+public:
+    RingBuffer(int);
+    T at(int);
+    void push_back(T);
+    size_t size();
+    typename std::vector<T>::iterator end();
+private:
+    std::vector<T> bdata;
+    size_t bsize;
+};
 
+template<typename T>
+RingBuffer<T>::RingBuffer(int size){
+    this->bsize = size;
+}
+template<typename T>
+void RingBuffer<T>::push_back(T elm){
+    if(this->bdata.size()==this->bsize){
+        this->bdata.erase(this->bdata.begin());
+    }
+    this->bdata.push_back(elm);
+}
+template<typename T>
+size_t RingBuffer<T>::size(){
+    return this->bdata.size();
+}
+template<typename T>
+T RingBuffer<T>::at(int idx){
+    if(idx>=this->bsize){
+        idx = bsize-1; 
+    }
+    return this->bdata.at(idx);
+}
+template<typename T>
+typename std::vector<T>::iterator RingBuffer<T>::end(){
+    return this->bdata.end();
+}
+template class RingBuffer<DataFrame>;
 #endif /* dataStructures_h */
