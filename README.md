@@ -16,6 +16,33 @@ By using OpenCv built in function `contains(pt)` we can easily check if the keyp
 
 ## FP.4 Compute Camera-based TTC
 For Camera-based TTC computation we should match 2 keypoints and the calculate the distance between them. In the ideal case the distance between all the keypoints on the preceding vehicle should be equal. But in practice this don't happen. So we can make our computation based on the median of all the computed distance. this will make the algorithm robust in dealing with poor keypoints matching. 
+## FP.5 Performance Evaluation 1
+Lidar based TTC computation suffers from certain problems. on some frames we get a negative TTC this because the preceding vehicle is moving away from the ego vehicle. also in some frame we get an inf value due to the vehicles are stationary and division by zero is happened in TTC computation.
+In the following plots we can notice the two problems. 
+![averagemean1](images/medianavg.png)
+![averagemean1](images/medianavg2.png)
+In some other frames we can notice a false object detection and the bounding box is alternated between the preceding vehicle and the truck on the right side.
+this false detection results in miscalculation of Lidar TTC. 
+![truck](images/Screenshot1.png)
+
+Also a very important trick is the shrinkfactor to reduce the region of the bounding box. this will reject the points which belong to the road not the preceding vehicle 
+![road](images/Screenshot5.png)
+
+## FP.6 Performance Evaluation 2
+The Following Table shows Detector / Descriptor combinations and the Standard Deviation of the computed TTC using this combination.
+
+![std](images/Screenshot6.png)
+
+As we can see SIFT/SIFT has the lowest STD which means the most stable readings. some combinations give Inifinty in the TTC so it's STD is nan in the table.
+
+The Following Graphs shows some of the combinations TTC plotted with the Lidar TTC.
+
+![SIFT](images/sift.png)
+![FAST](images/fast.png)
+![BRISK](images/brisk.png)
+![AKAZE](images/akaze.png)
+
+
 # SFND 3D Object Tracking
 
 Welcome to the final project of the camera course. By completing all the lessons, you now have a solid understanding of keypoint detectors, descriptors, and methods to match them between successive images. Also, you know how to detect objects in an image using the YOLO deep-learning framework. And finally, you know how to associate regions in a camera image with Lidar points in 3D space. Let's take a look at our program schematic to see what we already have accomplished and what's still missing.
