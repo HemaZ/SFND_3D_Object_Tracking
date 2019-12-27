@@ -221,24 +221,68 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC, string ttc_method)
 {
+    // compute TTC based on median and average 
      // auxiliary variables
     double dT = 1/frameRate;        // time between two measurements in seconds
-   
+    double totalPrev = 0;
+    double totalCurr = 0;
+    vector<double> xPrev, XCur;
     // find closest distance to Lidar points within ego lane
     double minXPrev = 1e9, minXCurr = 1e9;
     for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
     {
         minXPrev = minXPrev > it->x ? it->x : minXPrev;
+        xPrev.push_back(it->x);
+        totalPrev += it->x;
     }
 
     for (auto it = lidarPointsCurr.begin(); it != lidarPointsCurr.end(); ++it)
     {
         minXCurr = minXCurr > it->x ? it->x : minXCurr;
+        XCur.push_back(it->x);
+        totalCurr += it->x;
     }
-    // compute TTC from both measurements
-    TTC = minXCurr * dT / (minXPrev - minXCurr);
+    if(ttc_method.compare("MEDIAN") == 0){
+        // Compute Median Prev
+        std::sort(xPrev.begin(), xPrev.end());
+        double medianPrev;
+        size_t half = xPrev.size()/2;
+        if(xPrev.size()%2==0){
+            medianPrev = (xPrev.at(half) + xPrev.at(half-1))/2;
+        }else{
+            medianPrev = xPrev[half];
+        }
+        // Compute Median Curr
+        std::sort(XCur.begin(), XCur.end());
+        double medianCur;
+        half = XCur.size()/2;
+        if(XCur.size()%2==0){
+            medianCur = (XCur.at(half) + XCur.at(half-1))/2;
+        }else{
+            medianCur = XCur[half];
+        }
+        // TTC Based on Median
+        cout << "medianPrev " << medianPrev <<" ";
+        cout << "MedianCurr " << medianCur << endl;
+        TTC = minXCurr * dT / (medianPrev - medianCur);
+        cout << "TTC Median Based " << TTC << endl;
+    }else if(ttc_method.compare("AVERAGE") ==0){
+        double avgPrev = totalPrev / lidarPointsPrev.size();
+        double avgCur = totalCurr / lidarPointsCurr.size();
+         // TTC Based on Average
+        cout << "avgPrev " << avgPrev <<" ";
+        cout << "avgCur " << avgCur << endl;
+        TTC = minXCurr * dT / (avgPrev - avgCur);
+        cout << "TTC Average Based " << TTC << endl;
+    }else{
+        // compute TTC from both measurements
+        cout << "MinXPrev " << minXPrev <<" ";
+        cout << "MinxCurr " << minXCurr << endl;
+        TTC = minXCurr * dT / (minXPrev - minXCurr);
+        cout << "TTC Minimum Point Based " << TTC << endl;
+    }   
 }
 
 

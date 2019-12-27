@@ -4,7 +4,18 @@
 I`ve created 2D Array to track number of matched keypoints between each previous bounding box and current bounding box.
 The Array shape is (CurrBBoxes, PrevBBoxes).
 and at the end of the function i find the index of maximum matched prevbox with currbox. then add the pair to the returned map. 
+## FP.2 Compute Lidar-based TTC
+TTC computation using Lidar requires identifying a point across two consecutive frames, Then by knowing the time between the two frames and the change in position of the point. We can compute the TTC. 
+Lidar collects numerous amount of points, one distinctive point is the closest point to our vehicle in the x axis.
+We use this point for our computation. We can make our algorithm robust to outlier by clipping any lidar point lies outside the preceding vehicle bounding box.  
+Computing TTc based on the closest points alone introduces some errors because of outliers. 
+a TTC based on Average and Median Points X is implemented and the median approach offers the best stable results yet. 
 
+## FP.3 Associate Keypoint Correspondences with Bounding Boxes
+By using OpenCv built in function `contains(pt)` we can easily check if the keypoint lies in the respective bounding box. We can also remove the outliers by rejecting any keypoints matches which their distance is bigger than a certain threshold, in our case we used the mean of all keypoints distance as threshold. because all the keypoints are located on the same object. their distance should be the same in the ideal case, otherwise these keypoints are outliers.  
+
+## FP.4 Compute Camera-based TTC
+For Camera-based TTC computation we should match 2 keypoints and the calculate the distance between them. In the ideal case the distance between all the keypoints on the preceding vehicle should be equal. But in practice this don't happen. So we can make our computation based on the median of all the computed distance. this will make the algorithm robust in dealing with poor keypoints matching. 
 # SFND 3D Object Tracking
 
 Welcome to the final project of the camera course. By completing all the lessons, you now have a solid understanding of keypoint detectors, descriptors, and methods to match them between successive images. Also, you know how to detect objects in an image using the YOLO deep-learning framework. And finally, you know how to associate regions in a camera image with Lidar points in 3D space. Let's take a look at our program schematic to see what we already have accomplished and what's still missing.

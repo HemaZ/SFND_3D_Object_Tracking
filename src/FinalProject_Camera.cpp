@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
     string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
     string imgFileType = ".png";
     int imgStartIndex = 0; // first file index to load (assumes Lidar and camera names have identical naming convention)
-    int imgEndIndex = 18;   // last file index to load
+    int imgEndIndex = 40;   // last file index to load
     int imgStepWidth = 1; 
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
@@ -128,13 +128,7 @@ int main(int argc, const char *argv[])
         float shrinkFactor = 0.10; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
-        // Visualize 3D objects
-        bVis = false;
-        if(bVis)
-        {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
-        }
-        bVis = false;
+        
 
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
         
@@ -185,7 +179,7 @@ int main(int argc, const char *argv[])
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+        string descriptorType = "BRIEF"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, totaltime);
 
         // push descriptors for current frame to end of data buffer
@@ -229,7 +223,13 @@ int main(int argc, const char *argv[])
 
 
             /* COMPUTE TTC ON OBJECT IN FRONT */
-
+            // Visualize 3D objects
+            bVis = false;
+            if(bVis)
+            {
+                show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(1000, 1000), true);
+            }
+            bVis = false;
             // loop over all BB match pairs
             for (auto it1 = (dataBuffer.end() - 1)->bbMatches.begin(); it1 != (dataBuffer.end() - 1)->bbMatches.end(); ++it1)
             {
